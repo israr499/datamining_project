@@ -1,0 +1,63 @@
+# =========================
+# Python Cache Files
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Virtual Environments
+# =========================
+venv/
+env/
+.venv/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+
+# =========================
+# Database Files
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Flask
+# =========================
+instance/
+.flaskenv
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Large Dataset Files
+# =========================
+data/raw/LD2011_2014.txt
+data/processed/cleaned_data.csv
+
+# =========================
+# Ignore ONLY Large CSV/TXT Data
+# =========================
+data/raw/*.csv
+data/raw/*.txt
+data/processed/*.csv
+data/processed/*.txt

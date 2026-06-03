@@ -1,0 +1,1040 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Reports{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-chart-line"></i>
+            Analytics & Reports
+        </h1>
+
+        <p>
+            Real model analytics, detection history, risk distribution,
+            feature importance, and future risk forecasting.
+        </p>
+    </div>
+
+    <!-- MODEL METRICS -->
+    <div class="metrics-grid">
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+
+            <div class="metric-info">
+                <div class="metric-value" id="metric-accuracy">--</div>
+                <div class="metric-label">Random Forest Accuracy</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+
+            <div class="metric-info">
+                <div class="metric-value" id="metric-precision">--</div>
+                <div class="metric-label">Precision</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+
+            <div class="metric-info">
+                <div class="metric-value" id="metric-recall">--</div>
+                <div class="metric-label">Recall</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+
+            <div class="metric-info">
+                <div class="metric-value" id="metric-f1">--</div>
+                <div class="metric-label">F1 Score</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODULE F5 FORECAST ANALYTICS -->
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-wand-magic-sparkles"></i>
+                Future Risk Forecast Analytics
+            </h3>
+
+            <p>
+                Predictive analysis of households likely to become suspicious in the near future.
+            </p>
+        </div>
+
+        <div style="padding:20px;">
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-radiation"></i>
+                    </div>
+
+                    <div class="stat-info">
+                        <h3 id="forecast-very-high">--</h3>
+                        <p>Very High Future Risk</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-arrow-trend-up"></i>
+                    </div>
+
+                    <div class="stat-info">
+                        <h3 id="forecast-high">--</h3>
+                        <p>High Future Risk</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-area"></i>
+                    </div>
+
+                    <div class="stat-info">
+                        <h3 id="forecast-average">--</h3>
+                        <p>Average Forecast Risk</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-list-check"></i>
+                    </div>
+
+                    <div class="stat-info">
+                        <h3 id="forecast-total">--</h3>
+                        <p>Forecasted Households</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FORECAST CHARTS -->
+    <div class="charts-row">
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-pie"></i>
+                    Future Risk Distribution
+                </h3>
+
+                <p>
+                    Distribution of households by predicted future theft risk.
+                </p>
+            </div>
+
+            <div id="forecast-distribution-chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-ranking-star"></i>
+                    Top Forecast Risk Scores
+                </h3>
+
+                <p>
+                    Highest forecast risk probabilities across households.
+                </p>
+            </div>
+
+            <div id="forecast-bar-chart"></div>
+        </div>
+
+    </div>
+
+    <!-- TOP FORECAST TABLE -->
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-table"></i>
+                Top Future Risk Households
+            </h3>
+
+            <p>
+                Click any Household ID to open full household forecast and investigation details.
+            </p>
+        </div>
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>Household ID</th>
+                    <th>Future Risk</th>
+                    <th>Forecast Level</th>
+                    <th>Risk Trend</th>
+                    <th>Forecast Window</th>
+                    <th>Current Type</th>
+                    <th>Current Confidence</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="forecast-risk-tbody">
+                <tr>
+                    <td colspan="8" class="loading">
+                        Loading forecast analytics...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <!-- ORIGINAL ANALYTICS CHARTS -->
+    <div class="charts-row">
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-table-cells"></i>
+                    Confusion Matrix
+                </h3>
+
+                <p>
+                    Random Forest classification result from actual model metrics.
+                </p>
+            </div>
+
+            <div id="confusion-chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-bar"></i>
+                    Feature Importance
+                </h3>
+
+                <p>
+                    Top features used by the Random Forest model.
+                </p>
+            </div>
+
+            <div id="feature-importance-chart"></div>
+        </div>
+
+    </div>
+
+    <div class="charts-row">
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-pie"></i>
+                    Risk Distribution
+                </h3>
+
+                <p>
+                    Risk levels from stored prediction history.
+                </p>
+            </div>
+
+            <div id="risk-distribution-chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-area"></i>
+                    Detection Trend
+                </h3>
+
+                <p>
+                    Stored predictions and suspicious detections over time.
+                </p>
+            </div>
+
+            <div id="detection-trend-chart"></div>
+        </div>
+
+    </div>
+
+    <div class="charts-row">
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-pie"></i>
+                    Cluster Distribution
+                </h3>
+
+                <p>
+                    K-Means household segmentation by consumption behavior.
+                </p>
+            </div>
+
+            <div id="cluster-dist-chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-bolt"></i>
+                    Hourly Consumption Pattern
+                </h3>
+
+                <p>
+                    Average daily electricity usage pattern from processed data.
+                </p>
+            </div>
+
+            <div id="hourly-chart"></div>
+        </div>
+
+    </div>
+
+    <!-- DETECTION HISTORY -->
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-clock-rotate-left"></i>
+                Recent Detection History
+            </h3>
+
+            <p>
+                Click any Household ID to open the full investigation page.
+            </p>
+        </div>
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Household ID</th>
+                    <th>Anomaly Type</th>
+                    <th>Confidence</th>
+                    <th>Risk Level</th>
+                    <th>Total Consumption</th>
+                </tr>
+            </thead>
+
+            <tbody id="history-tbody">
+                <tr>
+                    <td colspan="6" class="loading">
+                        Loading detection history...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <!-- MODEL PERFORMANCE TABLE -->
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-table"></i>
+                Model Performance Metrics
+            </h3>
+
+            <p>
+                Detailed comparison of all available models from actual training outputs.
+            </p>
+        </div>
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1 Score</th>
+                    <th>ROC-AUC</th>
+                </tr>
+            </thead>
+
+            <tbody id="performance-tbody">
+                <tr>
+                    <td colspan="6" class="loading">
+                        Loading model metrics...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    loadForecastAnalytics();
+    loadModelMetrics();
+    loadConfusionMatrix();
+    loadFeatureImportance();
+    loadRiskDistribution();
+    loadDetectionTrend();
+    loadClusterDistribution();
+    loadHourlyPattern();
+    loadDetectionHistory();
+});
+
+function safeNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
+function formatPercent(value) {
+    return safeNumber(value).toFixed(1) + '%';
+}
+
+function toPercent(value) {
+    return (safeNumber(value) * 100).toFixed(1) + '%';
+}
+
+function cleanModelName(name) {
+    return String(name || '')
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function householdLink(householdId) {
+    const id = householdId || 'Unknown';
+
+    return `
+        <a href="/household/${encodeURIComponent(id)}" class="household-link">
+            ${id}
+        </a>
+    `;
+}
+
+function getRiskBadgeClass(riskLevel) {
+    const risk = String(riskLevel || '').toLowerCase();
+
+    if (risk.includes('critical')) return 'high-risk';
+    if (risk.includes('high')) return 'high-risk';
+    if (risk.includes('medium')) return 'medium-risk';
+    if (risk.includes('low')) return 'investigate';
+
+    return 'normal';
+}
+
+function getForecastBadgeClass(level) {
+    const text = String(level || '').toLowerCase();
+
+    if (text.includes('very high')) return 'high-risk';
+    if (text.includes('high')) return 'high-risk';
+    if (text.includes('moderate')) return 'medium-risk';
+    if (text.includes('low')) return 'investigate';
+
+    return 'normal';
+}
+
+/* ============================================
+   MODULE F5 - FORECAST ANALYTICS
+============================================ */
+
+function loadForecastAnalytics() {
+    fetch('/api/forecast/top-risk?limit=20')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                renderEmptyForecastAnalytics();
+                return;
+            }
+
+            const summary = data.summary || {};
+            const forecasts = data.top_forecasts || [];
+
+            document.getElementById('forecast-very-high').textContent =
+                summary.very_high_future_risk || 0;
+
+            document.getElementById('forecast-high').textContent =
+                summary.high_future_risk || 0;
+
+            document.getElementById('forecast-average').textContent =
+                formatPercent(summary.average_future_risk || 0);
+
+            document.getElementById('forecast-total').textContent =
+                summary.total_forecasted_households || 0;
+
+            renderForecastDistribution(summary);
+            renderForecastBarChart(forecasts);
+            renderForecastTable(forecasts);
+        })
+        .catch(error => {
+            console.error('Forecast analytics error:', error);
+            renderEmptyForecastAnalytics();
+        });
+}
+
+function renderEmptyForecastAnalytics() {
+    document.getElementById('forecast-very-high').textContent = '0';
+    document.getElementById('forecast-high').textContent = '0';
+    document.getElementById('forecast-average').textContent = '0.0%';
+    document.getElementById('forecast-total').textContent = '0';
+
+    document.getElementById('forecast-risk-tbody').innerHTML = `
+        <tr>
+            <td colspan="8" style="text-align:center; padding:30px;">
+                No forecast data available. Upload and predict a CSV first.
+            </td>
+        </tr>
+    `;
+
+    Plotly.newPlot(
+        'forecast-distribution-chart',
+        [{
+            labels: ['No Data'],
+            values: [1],
+            type: 'pie'
+        }],
+        {
+            height: 360,
+            margin: { t: 20, r: 20, l: 20, b: 20 }
+        },
+        { responsive: true }
+    );
+
+    Plotly.newPlot(
+        'forecast-bar-chart',
+        [{
+            x: ['No Data'],
+            y: [0],
+            type: 'bar'
+        }],
+        {
+            height: 360,
+            margin: { t: 20, r: 20, l: 60, b: 80 },
+            yaxis: { range: [0, 100], title: 'Future Risk %' }
+        },
+        { responsive: true }
+    );
+}
+
+function renderForecastDistribution(summary) {
+    const labels = [
+        'Very High Future Risk',
+        'High Future Risk',
+        'Moderate Future Risk',
+        'Low Future Risk'
+    ];
+
+    const values = [
+        safeNumber(summary.very_high_future_risk),
+        safeNumber(summary.high_future_risk),
+        safeNumber(summary.moderate_future_risk),
+        safeNumber(summary.low_future_risk)
+    ];
+
+    const total = values.reduce((a, b) => a + b, 0);
+
+    const chartValues = total > 0 ? values : [1];
+    const chartLabels = total > 0 ? labels : ['No Data'];
+
+    const trace = {
+        labels: chartLabels,
+        values: chartValues,
+        type: 'pie',
+        textinfo: 'label+percent',
+        hoverinfo: 'label+value+percent'
+    };
+
+    const layout = {
+        height: 370,
+        margin: { t: 20, r: 20, l: 20, b: 20 }
+    };
+
+    Plotly.newPlot(
+        'forecast-distribution-chart',
+        [trace],
+        layout,
+        { responsive: true }
+    );
+}
+
+function renderForecastBarChart(forecasts) {
+    if (!forecasts || forecasts.length === 0) {
+        Plotly.newPlot(
+            'forecast-bar-chart',
+            [{
+                x: ['No Data'],
+                y: [0],
+                type: 'bar'
+            }],
+            {
+                height: 370,
+                margin: { t: 20, r: 20, l: 60, b: 80 },
+                yaxis: { range: [0, 100], title: 'Future Risk %' }
+            },
+            { responsive: true }
+        );
+
+        return;
+    }
+
+    const top = forecasts.slice(0, 10).reverse();
+
+    const trace = {
+        x: top.map(x => safeNumber(x.future_risk_probability)),
+        y: top.map(x => x.household_id),
+        type: 'bar',
+        orientation: 'h',
+        text: top.map(x => formatPercent(x.future_risk_probability)),
+        textposition: 'auto'
+    };
+
+    const layout = {
+        height: 370,
+        margin: { t: 20, r: 40, l: 150, b: 55 },
+        xaxis: {
+            title: 'Future Risk %',
+            range: [0, 100]
+        },
+        yaxis: {
+            title: 'Household'
+        }
+    };
+
+    Plotly.newPlot(
+        'forecast-bar-chart',
+        [trace],
+        layout,
+        { responsive: true }
+    );
+}
+
+function renderForecastTable(forecasts) {
+    const tbody = document.getElementById('forecast-risk-tbody');
+
+    if (!forecasts || forecasts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center; padding:30px;">
+                    No forecast data available.
+                    <br>
+                    <small>Run batch prediction first.</small>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = forecasts.map(row => {
+        const level = row.forecast_level || 'Unknown';
+        const badgeClass = getForecastBadgeClass(level);
+
+        return `
+            <tr>
+                <td>${householdLink(row.household_id)}</td>
+
+                <td>
+                    <strong>${formatPercent(row.future_risk_probability)}</strong>
+                </td>
+
+                <td>
+                    <span class="status-badge ${badgeClass}">
+                        ${level}
+                    </span>
+                </td>
+
+                <td>${row.risk_trend || 'Unknown'}</td>
+
+                <td>${row.forecast_window || 'Unknown'}</td>
+
+                <td>${row.current_anomaly_type || 'Unknown'}</td>
+
+                <td>${formatPercent(row.current_confidence || 0)}</td>
+
+                <td>
+                    <a href="/household/${encodeURIComponent(row.household_id)}"
+                       class="household-link">
+                        View Forecast
+                    </a>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/* ============================================
+   MODEL METRICS
+============================================ */
+
+function loadModelMetrics() {
+    fetch('/api/analytics/model_metrics')
+        .then(response => response.json())
+        .then(data => {
+            const metrics = data.metrics || {};
+            const rf = metrics.random_forest || {};
+
+            document.getElementById('metric-accuracy').textContent =
+                toPercent(rf.accuracy || 0);
+
+            document.getElementById('metric-precision').textContent =
+                toPercent(rf.precision || 0);
+
+            document.getElementById('metric-recall').textContent =
+                toPercent(rf.recall || 0);
+
+            document.getElementById('metric-f1').textContent =
+                toPercent(rf.f1_score || 0);
+
+            const rows = Object.entries(metrics).map(([model, m]) => `
+                <tr>
+                    <td><strong>${cleanModelName(model)}</strong></td>
+                    <td>${toPercent(m.accuracy || 0)}</td>
+                    <td>${toPercent(m.precision || 0)}</td>
+                    <td>${toPercent(m.recall || 0)}</td>
+                    <td>${toPercent(m.f1_score || 0)}</td>
+                    <td>${safeNumber(m.roc_auc).toFixed(3)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('performance-tbody').innerHTML =
+                rows || `<tr><td colspan="6">No model metrics found.</td></tr>`;
+        })
+        .catch(error => {
+            document.getElementById('performance-tbody').innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        Error loading metrics: ${error.message}
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+/* ============================================
+   CONFUSION MATRIX
+============================================ */
+
+function loadConfusionMatrix() {
+    fetch('/api/analytics/confusion_matrix')
+        .then(response => response.json())
+        .then(data => {
+            const z = data.confusion_matrix || [[0, 0], [0, 0]];
+
+            const trace = {
+                z: z,
+                x: ['Predicted Normal', 'Predicted Suspicious'],
+                y: ['Actual Normal', 'Actual Suspicious'],
+                type: 'heatmap',
+                colorscale: 'Blues',
+                text: [
+                    [`TN: ${z[0][0]}`, `FP: ${z[0][1]}`],
+                    [`FN: ${z[1][0]}`, `TP: ${z[1][1]}`]
+                ],
+                texttemplate: '%{text}',
+                textfont: { size: 15 }
+            };
+
+            const layout = {
+                height: 410,
+                margin: { t: 20, r: 20, l: 120, b: 70 },
+                xaxis: { title: 'Predicted Class' },
+                yaxis: { title: 'Actual Class' }
+            };
+
+            Plotly.newPlot(
+                'confusion-chart',
+                [trace],
+                layout,
+                { responsive: true }
+            );
+        });
+}
+
+/* ============================================
+   FEATURE IMPORTANCE
+============================================ */
+
+function loadFeatureImportance() {
+    fetch('/api/analytics/feature_importance')
+        .then(response => response.json())
+        .then(data => {
+            const features = data.features || [];
+            const importance = data.importance || [];
+
+            const trace = {
+                x: importance,
+                y: features,
+                type: 'bar',
+                orientation: 'h',
+                text: importance.map(v => (safeNumber(v) * 100).toFixed(1) + '%'),
+                textposition: 'auto'
+            };
+
+            const layout = {
+                height: 410,
+                yaxis: {
+                    autorange: 'reversed',
+                    title: 'Features'
+                },
+                xaxis: {
+                    title: 'Importance'
+                },
+                margin: { t: 20, r: 80, l: 150, b: 50 }
+            };
+
+            Plotly.newPlot(
+                'feature-importance-chart',
+                [trace],
+                layout,
+                { responsive: true }
+            );
+        });
+}
+
+/* ============================================
+   RISK DISTRIBUTION
+============================================ */
+
+function loadRiskDistribution() {
+    fetch('/api/analytics/risk_distribution')
+        .then(response => response.json())
+        .then(data => {
+            const risk = data.risk_distribution || {};
+            const labels = Object.keys(risk);
+            const values = Object.values(risk);
+
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                textinfo: 'label+percent',
+                hoverinfo: 'label+value+percent'
+            };
+
+            const layout = {
+                height: 400,
+                margin: { t: 20, b: 20, l: 20, r: 20 }
+            };
+
+            Plotly.newPlot(
+                'risk-distribution-chart',
+                [trace],
+                layout,
+                { responsive: true }
+            );
+        });
+}
+
+/* ============================================
+   DETECTION TREND
+============================================ */
+
+function loadDetectionTrend() {
+    fetch('/api/analytics/detection_trend')
+        .then(response => response.json())
+        .then(data => {
+            const dates = data.dates || [];
+            const total = data.total || [];
+            const suspicious = data.suspicious || [];
+
+            const traces = [
+                {
+                    x: dates,
+                    y: total,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Total Predictions',
+                    line: {
+                        color: '#2E86AB',
+                        width: 3
+                    }
+                },
+                {
+                    x: dates,
+                    y: suspicious,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Suspicious',
+                    line: {
+                        color: '#C73E1D',
+                        width: 3
+                    }
+                }
+            ];
+
+            const layout = {
+                height: 400,
+                xaxis: { title: 'Date' },
+                yaxis: {
+                    title: 'Count',
+                    rangemode: 'tozero'
+                },
+                margin: { t: 20, r: 20, l: 60, b: 60 }
+            };
+
+            Plotly.newPlot(
+                'detection-trend-chart',
+                traces,
+                layout,
+                { responsive: true }
+            );
+        });
+}
+
+/* ============================================
+   CLUSTER DISTRIBUTION
+============================================ */
+
+function loadClusterDistribution() {
+    fetch('/api/analytics/clusters')
+        .then(response => response.json())
+        .then(data => {
+            const clusters = data.clusters || [];
+            const labels = clusters.map(c => `Cluster ${c.cluster} (${c.risk_level})`);
+            const sizes = clusters.map(c => c.size);
+
+            const trace = {
+                labels: labels,
+                values: sizes,
+                type: 'pie',
+                textinfo: 'label+percent',
+                hoverinfo: 'label+value+percent'
+            };
+
+            const layout = {
+                height: 400,
+                margin: { t: 20, b: 20, l: 20, r: 20 }
+            };
+
+            Plotly.newPlot(
+                'cluster-dist-chart',
+                [trace],
+                layout,
+                { responsive: true }
+            );
+        });
+}
+
+/* ============================================
+   HOURLY PATTERN
+============================================ */
+
+function loadHourlyPattern() {
+    fetch('/api/analytics/hourly_pattern')
+        .then(response => response.json())
+        .then(data => {
+            const hourly = data.hourly_pattern || [];
+
+            const trace = {
+                x: hourly.map(h => h.label),
+                y: hourly.map(h => h.consumption),
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {
+                    color: '#2E86AB',
+                    width: 3
+                },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(46, 134, 171, 0.18)'
+            };
+
+            const layout = {
+                height: 400,
+                xaxis: {
+                    title: 'Hour of Day',
+                    tickangle: -45
+                },
+                yaxis: {
+                    title: 'Average Consumption',
+                    rangemode: 'tozero'
+                },
+                margin: { t: 20, r: 20, l: 60, b: 70 }
+            };
+
+            Plotly.newPlot(
+                'hourly-chart',
+                [trace],
+                layout,
+                { responsive: true }
+            );
+        });
+}
+
+/* ============================================
+   DETECTION HISTORY
+============================================ */
+
+function loadDetectionHistory() {
+    fetch('/api/analytics/detection_history')
+        .then(response => response.json())
+        .then(data => {
+            const history = data.history || [];
+            const tbody = document.getElementById('history-tbody');
+
+            if (history.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            No detection history found. Run predictions first.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = history.map(row => {
+                const riskLevel = row.risk_level || 'Normal';
+                const badgeClass = getRiskBadgeClass(riskLevel);
+
+                return `
+                    <tr>
+                        <td>${row.created_at || '--'}</td>
+                        <td>${householdLink(row.household_id)}</td>
+                        <td>${row.anomaly_type || 'Unknown'}</td>
+                        <td>${formatPercent(row.confidence)}</td>
+                        <td>
+                            <span class="status-badge ${badgeClass}">
+                                ${riskLevel}
+                            </span>
+                        </td>
+                        <td>${safeNumber(row.total_consumption).toFixed(2)} kWh</td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            document.getElementById('history-tbody').innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        Error loading history: ${error.message}
+                    </td>
+                </tr>
+            `;
+        });
+}
+</script>
+{% endblock %}

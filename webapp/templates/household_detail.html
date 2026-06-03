@@ -1,0 +1,811 @@
+{% extends "base.html" %}
+
+{% block title %}Household Detail{% endblock %}
+
+{% block content %}
+<div class="household-detail-container">
+
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-home"></i>
+            Household Investigation
+        </h1>
+
+        <p>
+            Detailed anomaly analysis, consumption behavior,
+            future risk forecasting, and investigation workflow.
+        </p>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div style="margin-bottom: 20px; display:flex; gap:12px; flex-wrap:wrap;">
+
+        <button class="btn-secondary" onclick="window.location.href='/predict'">
+            <i class="fas fa-arrow-left"></i>
+            Back to Predictions
+        </button>
+
+        <button class="btn-primary" id="create-case-btn" onclick="createInvestigationCase()">
+            <i class="fas fa-folder-plus"></i>
+            Open Investigation Case
+        </button>
+
+        <button class="btn-secondary" id="open-existing-case-btn" style="display:none;">
+            <i class="fas fa-folder-open"></i>
+            Open Existing Case
+        </button>
+
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading-box" class="chart-card full-width">
+        <div class="loading">Loading household investigation...</div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="error-box" class="error" style="display:none;"></div>
+
+    <!-- MAIN CONTENT -->
+    <div id="detail-content" style="display:none;">
+
+        <!-- SUMMARY -->
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-id-card"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="household-id-card">--</h3>
+                    <p>Household ID</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="risk-level-card">--</h3>
+                    <p>Current Risk</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="confidence-card">--</h3>
+                    <p>Confidence</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="total-consumption-card">--</h3>
+                    <p>Total Consumption</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ACTIVE CASE -->
+        <div id="active-case-banner" style="display:none;"></div>
+
+        <!-- CURRENT RISK -->
+        <div id="risk-banner"></div>
+
+        <!-- ========================================= -->
+        <!-- MODULE F3 - FUTURE RISK FORECAST -->
+        <!-- ========================================= -->
+
+        <div class="chart-card full-width">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    Future Theft Risk Forecast
+                </h3>
+
+                <p>
+                    AI-powered predictive analysis estimating future suspicious behavior risk.
+                </p>
+            </div>
+
+            <div style="padding:20px;">
+
+                <div class="summary-grid">
+
+                    <div class="case-help-card">
+                        <strong>Future Risk Probability</strong>
+                        <p id="future-risk-probability">Loading...</p>
+                    </div>
+
+                    <div class="case-help-card">
+                        <strong>Forecast Level</strong>
+                        <p id="forecast-level">Loading...</p>
+                    </div>
+
+                    <div class="case-help-card">
+                        <strong>Risk Trend</strong>
+                        <p id="forecast-trend">Loading...</p>
+                    </div>
+
+                    <div class="case-help-card">
+                        <strong>Expected Risk Window</strong>
+                        <p id="forecast-window">Loading...</p>
+                    </div>
+
+                </div>
+
+                <div style="margin-top:25px;">
+
+                    <div class="forecast-progress-container">
+                        <div class="forecast-progress-label">
+                            Future Risk Score
+                        </div>
+
+                        <div class="forecast-progress-bar">
+                            <div class="forecast-progress-fill" id="forecast-progress-fill"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="forecast-alert-box" id="forecast-alert-box">
+
+                    <div class="forecast-alert-title">
+                        Forecast Reason
+                    </div>
+
+                    <div id="forecast-reason">
+                        Loading...
+                    </div>
+
+                </div>
+
+                <div class="forecast-recommendation-box">
+
+                    <div class="forecast-alert-title">
+                        Recommended Action
+                    </div>
+
+                    <div id="forecast-recommendation">
+                        Loading...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FORECAST CHART -->
+        <div class="chart-card full-width">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-area"></i>
+                    Forecast Projection
+                </h3>
+
+                <p>
+                    Predicted future escalation trend based on historical anomaly behavior.
+                </p>
+            </div>
+
+            <div id="forecast-projection-chart"></div>
+
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-row">
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class="fas fa-chart-line"></i>
+                        Confidence Trend
+                    </h3>
+
+                    <p>
+                        Historical anomaly confidence trend.
+                    </p>
+                </div>
+
+                <div id="confidence-trend-chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class="fas fa-bolt"></i>
+                        Consumption Trend
+                    </h3>
+
+                    <p>
+                        Total electricity consumption trend.
+                    </p>
+                </div>
+
+                <div id="consumption-trend-chart"></div>
+            </div>
+
+        </div>
+
+        <!-- STATS -->
+        <div class="chart-card full-width">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-pie"></i>
+                    Household Statistics
+                </h3>
+
+                <p>
+                    Aggregated historical statistics and anomaly behavior.
+                </p>
+            </div>
+
+            <div class="summary-grid" id="stats-grid"></div>
+
+        </div>
+
+        <!-- HISTORY -->
+        <div class="chart-card full-width">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-clock-rotate-left"></i>
+                    Detection History
+                </h3>
+
+                <p>
+                    Historical predictions and anomaly detections.
+                </p>
+            </div>
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Anomaly Type</th>
+                        <th>Confidence</th>
+                        <th>Status</th>
+                        <th>Total Consumption</th>
+                        <th>Zero Intervals</th>
+                    </tr>
+                </thead>
+
+                <tbody id="history-tbody">
+                    <tr>
+                        <td colspan="6">Loading...</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const householdId = "{{ household_id }}";
+
+let householdData = null;
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadHouseholdDetail();
+    loadForecastData();
+});
+
+function safeNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
+function formatPercent(value) {
+    return safeNumber(value).toFixed(1) + "%";
+}
+
+function getRiskBadgeClass(riskLevel) {
+    const risk = String(riskLevel || "").toLowerCase();
+
+    if (risk.includes("critical")) return "high-risk";
+    if (risk.includes("high")) return "high-risk";
+    if (risk.includes("medium")) return "medium-risk";
+    if (risk.includes("low")) return "investigate";
+
+    return "normal";
+}
+
+function loadForecastData() {
+
+    fetch(`/api/forecast/${encodeURIComponent(householdId)}`)
+        .then(response => response.json())
+        .then(data => {
+
+            if (!data.success) {
+                return;
+            }
+
+            renderForecastData(data);
+        })
+        .catch(error => {
+            console.error("Forecast API Error:", error);
+        });
+}
+
+function renderForecastData(data) {
+
+    const probability = safeNumber(data.future_risk_probability);
+
+    document.getElementById("future-risk-probability").textContent =
+        probability.toFixed(1) + "%";
+
+    document.getElementById("forecast-level").textContent =
+        data.forecast_level || "Unknown";
+
+    document.getElementById("forecast-trend").textContent =
+        data.risk_trend || "Unknown";
+
+    document.getElementById("forecast-window").textContent =
+        data.forecast_window || "Unknown";
+
+    document.getElementById("forecast-reason").textContent =
+        data.forecast_reason || "No forecast reason available.";
+
+    document.getElementById("forecast-recommendation").textContent =
+        data.recommended_action || "No recommendation available.";
+
+    const progressFill = document.getElementById("forecast-progress-fill");
+
+    progressFill.style.width = probability + "%";
+
+    if (probability >= 85) {
+        progressFill.style.background =
+            "linear-gradient(90deg, #dc2626, #ef4444)";
+    }
+    else if (probability >= 70) {
+        progressFill.style.background =
+            "linear-gradient(90deg, #ea580c, #f97316)";
+    }
+    else if (probability >= 50) {
+        progressFill.style.background =
+            "linear-gradient(90deg, #ca8a04, #eab308)";
+    }
+    else {
+        progressFill.style.background =
+            "linear-gradient(90deg, #2563eb, #3b82f6)";
+    }
+
+    renderForecastChart(data.forecast_points || []);
+}
+
+function renderForecastChart(points) {
+
+    if (!points || points.length === 0) {
+        return;
+    }
+
+    const labels = points.map(p => p.label);
+    const values = points.map(p => p.value);
+
+    Plotly.newPlot(
+        "forecast-projection-chart",
+        [{
+            x: labels,
+            y: values,
+            type: "scatter",
+            mode: "lines+markers",
+            line: {
+                color: "#A23B72",
+                width: 4,
+                shape: "spline"
+            },
+            marker: {
+                size: 10
+            },
+            fill: "tozeroy"
+        }],
+        {
+            height: 380,
+            margin: { t: 20, r: 20, l: 60, b: 70 },
+            xaxis: {
+                title: "Forecast Timeline"
+            },
+            yaxis: {
+                title: "Future Risk %",
+                range: [0, 100]
+            }
+        },
+        { responsive: true }
+    );
+}
+
+function loadHouseholdDetail() {
+
+    fetch(`/api/household/${encodeURIComponent(householdId)}`)
+        .then(response => response.json())
+        .then(data => {
+
+            document.getElementById("loading-box").style.display = "none";
+
+            if (!data.success) {
+                showError(data.message || "Failed to load household detail.");
+                return;
+            }
+
+            householdData = data;
+
+            document.getElementById("detail-content").style.display = "block";
+
+            renderSummary(data);
+            renderRiskBanner(data);
+            renderStats(data.stats);
+            renderHistory(data.history);
+            renderCharts(data.trend);
+            renderActiveCase(data.active_case);
+        })
+        .catch(error => {
+            document.getElementById("loading-box").style.display = "none";
+            showError(error.message);
+        });
+}
+
+function showError(message) {
+    const box = document.getElementById("error-box");
+
+    box.style.display = "block";
+
+    box.innerHTML = `
+        <strong>Error:</strong> ${message}
+    `;
+}
+
+function renderSummary(data) {
+
+    const latest = data.latest || {};
+
+    document.getElementById("household-id-card").textContent =
+        data.household_id || "--";
+
+    document.getElementById("risk-level-card").textContent =
+        data.risk_level || "--";
+
+    document.getElementById("confidence-card").textContent =
+        formatPercent(latest.confidence || 0);
+
+    document.getElementById("total-consumption-card").textContent =
+        safeNumber(latest.total_consumption).toFixed(2) + " kWh";
+}
+
+function renderRiskBanner(data) {
+
+    const latest = data.latest || {};
+
+    const riskLevel = data.risk_level || "Normal";
+
+    const badgeClass = getRiskBadgeClass(riskLevel);
+
+    const banner = document.getElementById("risk-banner");
+
+    banner.innerHTML = `
+        <div class="chart-card full-width">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-triangle-exclamation"></i>
+                    Latest Detection Summary
+                </h3>
+            </div>
+
+            <div style="padding:20px;">
+
+                <div class="summary-grid">
+
+                    <div>
+                        <strong>Anomaly Type:</strong><br>
+                        ${latest.anomaly_type || "Normal"}
+                    </div>
+
+                    <div>
+                        <strong>Risk Level:</strong><br>
+                        <span class="status-badge ${badgeClass}">
+                            ${riskLevel}
+                        </span>
+                    </div>
+
+                    <div>
+                        <strong>Confidence:</strong><br>
+                        ${formatPercent(latest.confidence)}
+                    </div>
+
+                    <div>
+                        <strong>Zero Intervals:</strong><br>
+                        ${latest.zero_intervals || 0}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+function renderStats(stats) {
+
+    if (!stats) return;
+
+    const grid = document.getElementById("stats-grid");
+
+    grid.innerHTML = `
+
+        <div class="case-help-card">
+            <strong>Total Checks</strong>
+            <p>${stats.total_checks}</p>
+        </div>
+
+        <div class="case-help-card">
+            <strong>Suspicious Count</strong>
+            <p>${stats.suspicious_count}</p>
+        </div>
+
+        <div class="case-help-card">
+            <strong>Suspicious Rate</strong>
+            <p>${safeNumber(stats.suspicious_rate).toFixed(1)}%</p>
+        </div>
+
+        <div class="case-help-card">
+            <strong>Average Confidence</strong>
+            <p>${safeNumber(stats.avg_confidence).toFixed(1)}%</p>
+        </div>
+
+        <div class="case-help-card">
+            <strong>Maximum Confidence</strong>
+            <p>${safeNumber(stats.max_confidence).toFixed(1)}%</p>
+        </div>
+
+        <div class="case-help-card">
+            <strong>Average Daily Usage</strong>
+            <p>${safeNumber(stats.avg_total_consumption).toFixed(2)} kWh</p>
+        </div>
+
+    `;
+}
+
+function renderHistory(history) {
+
+    const tbody = document.getElementById("history-tbody");
+
+    if (!history || history.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">No historical records found.</td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    tbody.innerHTML = history.map(row => {
+
+        const isAnomaly = Boolean(row.is_anomaly);
+
+        return `
+            <tr class="${isAnomaly ? 'anomaly-row' : 'normal-row'}">
+
+                <td>${row.created_at || "--"}</td>
+
+                <td>${row.anomaly_type || "Normal"}</td>
+
+                <td>${formatPercent(row.confidence)}</td>
+
+                <td>
+                    ${isAnomaly ? "⚠️ Suspicious" : "✅ Normal"}
+                </td>
+
+                <td>
+                    ${safeNumber(row.total_consumption).toFixed(2)} kWh
+                </td>
+
+                <td>
+                    ${row.zero_intervals || 0}
+                </td>
+
+            </tr>
+        `;
+    }).join("");
+}
+
+function renderCharts(trend) {
+
+    if (!trend) return;
+
+    const labels = trend.labels || [];
+    const confidence = trend.confidence || [];
+    const consumption = trend.total_consumption || [];
+
+    Plotly.newPlot(
+        "confidence-trend-chart",
+        [{
+            x: labels,
+            y: confidence,
+            type: "scatter",
+            mode: "lines+markers",
+            line: {
+                color: "#C73E1D",
+                width: 3
+            }
+        }],
+        {
+            height: 350,
+            margin: { t: 20, r: 20, l: 50, b: 70 },
+            xaxis: { title: "Time" },
+            yaxis: { title: "Confidence %" }
+        },
+        { responsive: true }
+    );
+
+    Plotly.newPlot(
+        "consumption-trend-chart",
+        [{
+            x: labels,
+            y: consumption,
+            type: "scatter",
+            mode: "lines+markers",
+            line: {
+                color: "#2E86AB",
+                width: 3
+            },
+            fill: "tozeroy"
+        }],
+        {
+            height: 350,
+            margin: { t: 20, r: 20, l: 50, b: 70 },
+            xaxis: { title: "Time" },
+            yaxis: { title: "Total Consumption (kWh)" }
+        },
+        { responsive: true }
+    );
+}
+
+function renderActiveCase(activeCase) {
+
+    if (!activeCase) return;
+
+    const banner = document.getElementById("active-case-banner");
+
+    banner.style.display = "block";
+
+    document.getElementById("create-case-btn").style.display = "none";
+
+    const openBtn = document.getElementById("open-existing-case-btn");
+
+    openBtn.style.display = "inline-block";
+
+    openBtn.onclick = function () {
+        window.location.href =
+            `/investigation/${encodeURIComponent(activeCase.case_id)}`;
+    };
+
+    banner.innerHTML = `
+        <div class="chart-card full-width" style="border-left:6px solid #F18F01;">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-folder-open"></i>
+                    Active Investigation Case Found
+                </h3>
+            </div>
+
+            <div style="padding:20px;">
+
+                <div class="summary-grid">
+
+                    <div>
+                        <strong>Case ID</strong><br>
+                        ${activeCase.case_id}
+                    </div>
+
+                    <div>
+                        <strong>Status</strong><br>
+                        ${activeCase.status}
+                    </div>
+
+                    <div>
+                        <strong>Priority</strong><br>
+                        ${activeCase.priority}
+                    </div>
+
+                    <div>
+                        <strong>Assigned To</strong><br>
+                        ${activeCase.assigned_to}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+function createInvestigationCase() {
+
+    const btn = document.getElementById("create-case-btn");
+
+    btn.disabled = true;
+
+    btn.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        Creating Case...
+    `;
+
+    fetch("/api/investigations/create", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            household_id: householdId
+        })
+
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        btn.disabled = false;
+
+        btn.innerHTML = `
+            <i class="fas fa-folder-plus"></i>
+            Open Investigation Case
+        `;
+
+        if (!data.success) {
+            alert(data.message || "Failed to create investigation case.");
+            return;
+        }
+
+        const caseData = data.case;
+
+        if (!caseData || !caseData.case_id) {
+            alert("Case created but case ID missing.");
+            return;
+        }
+
+        window.location.href =
+            `/investigation/${encodeURIComponent(caseData.case_id)}`;
+    })
+    .catch(error => {
+
+        btn.disabled = false;
+
+        btn.innerHTML = `
+            <i class="fas fa-folder-plus"></i>
+            Open Investigation Case
+        `;
+
+        alert("Error: " + error.message);
+    });
+}
+</script>
+{% endblock %}

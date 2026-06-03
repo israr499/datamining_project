@@ -1,0 +1,166 @@
+{
+    "project_name": "ElectroGuard",
+    "module": "Module 2 Fixed - Raw Feature Training",
+    "main_model": "random_forest",
+    "feature_count": 28,
+    "feature_columns": [
+        "total_daily",
+        "avg_consumption",
+        "std_consumption",
+        "min_consumption",
+        "max_consumption",
+        "median_consumption",
+        "consumption_range",
+        "cv",
+        "morning_peak",
+        "evening_peak",
+        "night_consumption",
+        "night_ratio",
+        "zero_intervals",
+        "zero_proportion",
+        "peak_hour",
+        "morning_ramp",
+        "evening_ramp",
+        "load_factor",
+        "day_of_week",
+        "is_weekend",
+        "is_monday",
+        "is_friday",
+        "month",
+        "season",
+        "rolling_7day_mean",
+        "rolling_7day_std",
+        "rolling_7day_max",
+        "zscore_7day"
+    ],
+    "anomaly_threshold": 5.534457265765435,
+    "metrics": {
+        "kmeans_distance": {
+            "accuracy": 0.5205,
+            "precision": 0.8253968253968254,
+            "recall": 0.052,
+            "f1_score": 0.09783631232361241,
+            "roc_auc": 0.5205000000000001,
+            "confusion_matrix": [
+                [
+                    989,
+                    11
+                ],
+                [
+                    948,
+                    52
+                ]
+            ]
+        },
+        "decision_tree": {
+            "accuracy": 0.843,
+            "precision": 0.9375,
+            "recall": 0.735,
+            "f1_score": 0.8239910313901346,
+            "roc_auc": 0.8429999999999999,
+            "confusion_matrix": [
+                [
+                    951,
+                    49
+                ],
+                [
+                    265,
+                    735
+                ]
+            ]
+        },
+        "naive_bayes": {
+            "accuracy": 0.6335,
+            "precision": 0.6511891279728199,
+            "recall": 0.575,
+            "f1_score": 0.6107275624004248,
+            "roc_auc": 0.6335,
+            "confusion_matrix": [
+                [
+                    692,
+                    308
+                ],
+                [
+                    425,
+                    575
+                ]
+            ]
+        },
+        "random_forest": {
+            "accuracy": 0.866,
+            "precision": 0.8986928104575164,
+            "recall": 0.825,
+            "f1_score": 0.8602711157455682,
+            "roc_auc": 0.958359,
+            "confusion_matrix": [
+                [
+                    907,
+                    93
+                ],
+                [
+                    175,
+                    825
+                ]
+            ]
+        },
+        "isolation_forest": {
+            "accuracy": 0.574,
+            "precision": 0.6456692913385826,
+            "recall": 0.328,
+            "f1_score": 0.43501326259946943,
+            "roc_auc": 0.5740000000000001,
+            "confusion_matrix": [
+                [
+                    820,
+                    180
+                ],
+                [
+                    672,
+                    328
+                ]
+            ]
+        }
+    },
+    "top_features": [
+        {
+            "feature": "load_factor",
+            "importance": 0.1684182092645421
+        },
+        {
+            "feature": "night_ratio",
+            "importance": 0.11285150114472058
+        },
+        {
+            "feature": "night_consumption",
+            "importance": 0.06999825901082714
+        },
+        {
+            "feature": "consumption_range",
+            "importance": 0.06045203170372832
+        },
+        {
+            "feature": "max_consumption",
+            "importance": 0.058020296436865626
+        },
+        {
+            "feature": "morning_peak",
+            "importance": 0.05297923766606206
+        },
+        {
+            "feature": "std_consumption",
+            "importance": 0.04790051273145031
+        },
+        {
+            "feature": "rolling_7day_mean",
+            "importance": 0.045895645647478354
+        },
+        {
+            "feature": "evening_peak",
+            "importance": 0.043563179227298646
+        },
+        {
+            "feature": "zero_proportion",
+            "importance": 0.04300559321036941
+        }
+    ]
+}

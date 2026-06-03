@@ -1,0 +1,657 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-tachometer-alt"></i>
+            Dashboard
+        </h1>
+
+        <p>
+            Overview of electricity consumption, anomaly detection,
+            trained ML models, investigations, and future risk forecasting.
+        </p>
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-home"></i>
+            </div>
+
+            <div class="stat-info">
+                <h3 id="total-households">--</h3>
+                <p>Total Households</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+
+            <div class="stat-info">
+                <h3 id="anomaly-count">--</h3>
+                <p>Suspicious Records</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+
+            <div class="stat-info">
+                <h3 id="total-energy">--</h3>
+                <p>Total Energy</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+
+            <div class="stat-info">
+                <h3 id="model-accuracy">--</h3>
+                <p>Random Forest Accuracy</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-chart-line"></i>
+                Future Risk Forecast Overview
+            </h3>
+
+            <p>
+                AI-powered prediction system for future suspicious households.
+            </p>
+        </div>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-radiation"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="future-high-risk">--</h3>
+                    <p>Very High Future Risk</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-area"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="avg-forecast-risk">--</h3>
+                    <p>Average Forecast Risk</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-arrow-trend-up"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="high-forecast-risk">--</h3>
+                    <p>High Future Risk</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+
+                <div class="stat-info">
+                    <h3 id="forecast-alerts">--</h3>
+                    <p>Forecast Alerts</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="charts-row">
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-line"></i>
+                    24-Hour Consumption Pattern
+                </h3>
+
+                <p>
+                    Average electricity usage pattern.
+                </p>
+            </div>
+
+            <div id="hourly-chart"></div>
+
+        </div>
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-pie"></i>
+                    Cluster Distribution
+                </h3>
+
+                <p>
+                    K-Means behavior segmentation.
+                </p>
+            </div>
+
+            <div id="cluster-chart"></div>
+
+        </div>
+
+    </div>
+
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-ranking-star"></i>
+                Top Future Risk Households
+            </h3>
+
+            <p>
+                Highest predicted suspicious households.
+            </p>
+        </div>
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>Household ID</th>
+                    <th>Future Risk</th>
+                    <th>Forecast Level</th>
+                    <th>Risk Trend</th>
+                    <th>Window</th>
+                    <th>Current Type</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="forecast-tbody">
+                <tr>
+                    <td colspan="7" class="loading">
+                        Loading future risk forecasts...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="chart-card full-width">
+
+        <div class="chart-header">
+            <h3>
+                <i class="fas fa-clock"></i>
+                Recent Detection Samples
+            </h3>
+
+            <p>
+                Click any household ID to open full investigation details.
+            </p>
+        </div>
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>Household ID</th>
+                    <th>Anomaly Type</th>
+                    <th>Confidence</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody id="activity-tbody">
+                <tr>
+                    <td colspan="4" class="loading">
+                        Loading dashboard data...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="system-status">
+
+        <div class="status-header">
+            <h3>
+                <i class="fas fa-microchip"></i>
+                System Status
+            </h3>
+        </div>
+
+        <div class="status-grid">
+
+            <div class="status-item">
+                <span class="status-label">Model Status:</span>
+                <span class="status-value" id="model-status">--</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Last Update:</span>
+                <span class="status-value" id="last-update">--</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Detection Threshold:</span>
+                <span class="status-value" id="detection-threshold">--</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Active Models:</span>
+                <span class="status-value" id="active-models">--</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+    loadDashboardData();
+    loadForecastOverview();
+    loadHourlyPattern();
+    loadClusterData();
+    loadRecentActivity();
+});
+
+function safeNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
+function formatInteger(value) {
+    return Math.round(safeNumber(value)).toLocaleString();
+}
+
+function formatEnergy(value) {
+    const num = safeNumber(value);
+
+    if (num >= 1000000000) {
+        return (num / 1000000000).toFixed(2) + 'B';
+    }
+
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(2) + 'M';
+    }
+
+    if (num >= 1000) {
+        return (num / 1000).toFixed(2) + 'K';
+    }
+
+    return num.toFixed(2);
+}
+
+function formatThreshold(value) {
+    return safeNumber(value).toFixed(2);
+}
+
+function formatPercent(value) {
+    return safeNumber(value).toFixed(1) + '%';
+}
+
+function householdLink(householdId) {
+    const id = householdId || 'Unknown';
+
+    return `
+        <a href="/household/${encodeURIComponent(id)}" class="household-link">
+            ${id}
+        </a>
+    `;
+}
+
+function getForecastBadgeClass(level) {
+    const text = String(level || '').toLowerCase();
+
+    if (text.includes('very high')) return 'high-risk';
+    if (text.includes('high')) return 'high-risk';
+    if (text.includes('moderate')) return 'medium-risk';
+    if (text.includes('low')) return 'investigate';
+
+    return 'normal';
+}
+
+function getStatusClass(status) {
+    const text = String(status || '').toLowerCase();
+
+    if (text.includes('critical')) return 'high-risk';
+    if (text.includes('high')) return 'high-risk';
+    if (text.includes('medium')) return 'medium-risk';
+    if (text.includes('normal')) return 'normal';
+
+    return 'investigate';
+}
+
+function loadDashboardData() {
+
+    fetch('/api/analytics/stats')
+        .then(response => response.json())
+        .then(data => {
+
+            document.getElementById('total-households').textContent =
+                formatInteger(data.total_households || 0);
+
+            document.getElementById('anomaly-count').textContent =
+                formatInteger(data.suspicious_records || 0);
+
+            document.getElementById('total-energy').textContent =
+                formatEnergy(data.total_energy || 0);
+
+            document.getElementById('model-accuracy').textContent =
+                formatPercent(data.model_accuracy || 0);
+
+            document.getElementById('model-status').textContent =
+                data.system_status || 'Active';
+
+            document.getElementById('last-update').textContent =
+                data.last_updated || '--';
+
+            document.getElementById('detection-threshold').textContent =
+                formatThreshold(data.anomaly_threshold || 0);
+
+            document.getElementById('active-models').textContent =
+                data.active_models || '5/5';
+
+        })
+        .catch(error => console.error(error));
+}
+
+function loadForecastOverview() {
+
+    fetch('/api/forecast/top-risk?limit=10')
+        .then(response => response.json())
+        .then(data => {
+
+            const summary = data.summary || {};
+            const forecasts = data.top_forecasts || [];
+
+            document.getElementById('future-high-risk').textContent =
+                formatInteger(summary.very_high_future_risk || 0);
+
+            document.getElementById('avg-forecast-risk').textContent =
+                formatPercent(summary.average_future_risk || 0);
+
+            document.getElementById('high-forecast-risk').textContent =
+                formatInteger(summary.high_future_risk || 0);
+
+            const alerts =
+                safeNumber(summary.high_future_risk || 0) +
+                safeNumber(summary.very_high_future_risk || 0);
+
+            document.getElementById('forecast-alerts').textContent =
+                formatInteger(alerts);
+
+            renderForecastTable(forecasts);
+
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            document.getElementById('forecast-tbody').innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        No forecast data available.
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+function renderForecastTable(rows) {
+
+    const tbody = document.getElementById('forecast-tbody');
+
+    if (!rows || rows.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center; padding:30px;">
+                    No forecast data available.
+                    <br>
+                    <small>Upload and predict a CSV first.</small>
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    tbody.innerHTML = rows.map(row => {
+
+        const probability = safeNumber(row.future_risk_probability);
+        const badgeClass = getForecastBadgeClass(row.forecast_level);
+
+        return `
+            <tr>
+
+                <td>
+                    ${householdLink(row.household_id)}
+                </td>
+
+                <td>
+                    <strong>${formatPercent(probability)}</strong>
+                </td>
+
+                <td>
+                    <span class="status-badge ${badgeClass}">
+                        ${row.forecast_level || 'Unknown'}
+                    </span>
+                </td>
+
+                <td>
+                    ${row.risk_trend || 'Unknown'}
+                </td>
+
+                <td>
+                    ${row.forecast_window || 'Unknown'}
+                </td>
+
+                <td>
+                    ${row.current_anomaly_type || 'Unknown'}
+                </td>
+
+                <td>
+                    <a href="/household/${encodeURIComponent(row.household_id)}"
+                       class="household-link">
+                       View
+                    </a>
+                </td>
+
+            </tr>
+        `;
+    }).join('');
+}
+
+function loadHourlyPattern() {
+
+    fetch('/api/analytics/hourly_pattern')
+        .then(response => response.json())
+        .then(data => {
+
+            const hourly = data.hourly_pattern || [];
+
+            const labels = hourly.map(x => x.label);
+            const values = hourly.map(x => safeNumber(x.consumption));
+
+            const trace = {
+                x: labels,
+                y: values,
+                type: 'scatter',
+                mode: 'lines+markers',
+                fill: 'tozeroy',
+                line: {
+                    color: '#2E86AB',
+                    width: 3
+                },
+                marker: {
+                    size: 6,
+                    color: '#F18F01'
+                },
+                fillcolor: 'rgba(46, 134, 171, 0.22)'
+            };
+
+            const layout = {
+                height: 350,
+                margin: {
+                    t: 20,
+                    r: 20,
+                    l: 55,
+                    b: 70
+                },
+                xaxis: {
+                    title: 'Hour of Day',
+                    tickangle: -45
+                },
+                yaxis: {
+                    title: 'Average Consumption',
+                    rangemode: 'tozero'
+                },
+                paper_bgcolor: 'white',
+                plot_bgcolor: '#f8f9fa'
+            };
+
+            Plotly.newPlot(
+                'hourly-chart',
+                [trace],
+                layout,
+                {responsive: true}
+            );
+        });
+}
+
+function loadClusterData() {
+
+    fetch('/api/analytics/clusters')
+        .then(response => response.json())
+        .then(data => {
+
+            const clusters = data.clusters || [];
+
+            const labels = clusters.map(
+                x => `Cluster ${x.cluster} (${x.risk_level || 'N/A'})`
+            );
+
+            const values = clusters.map(
+                x => safeNumber(x.size)
+            );
+
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                textinfo: 'label+percent',
+                hoverinfo: 'label+value+percent'
+            };
+
+            const layout = {
+                height: 350,
+                margin: {
+                    t: 20,
+                    r: 20,
+                    l: 20,
+                    b: 20
+                }
+            };
+
+            Plotly.newPlot(
+                'cluster-chart',
+                [trace],
+                layout,
+                {responsive: true}
+            );
+        });
+}
+
+function loadRecentActivity() {
+
+    fetch('/api/analytics/recent_activity')
+        .then(response => response.json())
+        .then(data => {
+
+            const tbody = document.getElementById('activity-tbody');
+            const activities = data.activities || [];
+
+            if (!activities.length) {
+
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4">
+                            No recent activity.
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            tbody.innerHTML = activities.map(row => {
+
+                const badgeClass = getStatusClass(row.status);
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${householdLink(row.household_id)}
+                        </td>
+
+                        <td>
+                            ${row.anomaly_type || 'Unknown'}
+                        </td>
+
+                        <td>
+                            ${formatPercent(row.confidence || 0)}
+                        </td>
+
+                        <td>
+                            <span class="status-badge ${badgeClass}">
+                                ${row.status || 'Unknown'}
+                            </span>
+                        </td>
+
+                    </tr>
+                `;
+            }).join('');
+
+        })
+        .catch(error => console.error(error));
+}
+
+</script>
+{% endblock %}

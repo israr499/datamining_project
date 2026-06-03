@@ -1,0 +1,87 @@
+{
+    "kmeans_distance": {
+        "accuracy": 0.5205,
+        "precision": 0.8253968253968254,
+        "recall": 0.052,
+        "f1_score": 0.09783631232361241,
+        "roc_auc": 0.5205000000000001,
+        "confusion_matrix": [
+            [
+                989,
+                11
+            ],
+            [
+                948,
+                52
+            ]
+        ]
+    },
+    "decision_tree": {
+        "accuracy": 0.843,
+        "precision": 0.9375,
+        "recall": 0.735,
+        "f1_score": 0.8239910313901346,
+        "roc_auc": 0.8429999999999999,
+        "confusion_matrix": [
+            [
+                951,
+                49
+            ],
+            [
+                265,
+                735
+            ]
+        ]
+    },
+    "naive_bayes": {
+        "accuracy": 0.6335,
+        "precision": 0.6511891279728199,
+        "recall": 0.575,
+        "f1_score": 0.6107275624004248,
+        "roc_auc": 0.6335,
+        "confusion_matrix": [
+            [
+                692,
+                308
+            ],
+            [
+                425,
+                575
+            ]
+        ]
+    },
+    "random_forest": {
+        "accuracy": 0.866,
+        "precision": 0.8986928104575164,
+        "recall": 0.825,
+        "f1_score": 0.8602711157455682,
+        "roc_auc": 0.958359,
+        "confusion_matrix": [
+            [
+                907,
+                93
+            ],
+            [
+                175,
+                825
+            ]
+        ]
+    },
+    "isolation_forest": {
+        "accuracy": 0.574,
+        "precision": 0.6456692913385826,
+        "recall": 0.328,
+        "f1_score": 0.43501326259946943,
+        "roc_auc": 0.5740000000000001,
+        "confusion_matrix": [
+            [
+                820,
+                180
+            ],
+            [
+                672,
+                328
+            ]
+        ]
+    }
+}

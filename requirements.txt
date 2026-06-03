@@ -1,0 +1,11 @@
+Flask
+flask-cors
+gunicorn
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.3.2
+joblib
+python-dotenv
+email-validator
+dnspython
+plotly

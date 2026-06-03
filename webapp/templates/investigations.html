@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Investigations{% endblock %}
+
+{% block content %}
+<div class="investigations-container">
+    <div class="page-header">
+        <h1><i class="fas fa-clipboard-list"></i> Investigation Management</h1>
+        <p>Track suspicious household cases, inspection status, and investigation priority.</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="total-cases">--</h3>
+                <p>Total Cases</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="open-cases">--</h3>
+                <p>Open Cases</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="critical-cases">--</h3>
+                <p>Critical Cases</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="resolved-cases">--</h3>
+                <p>Resolved / Closed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="chart-card full-width">
+        <div class="chart-header">
+            <h3><i class="fas fa-filter"></i> Case Queue Controls</h3>
+            <p>Filter investigation cases by status and review high-priority households first.</p>
+        </div>
+
+        <div style="padding: 20px;">
+            <div class="summary-grid">
+                <div>
+                    <label style="font-weight:800;">Filter by Status:</label>
+                    <select id="status-filter" class="case-select" onchange="loadInvestigations()">
+                        <option value="All">All Cases</option>
+                        <option value="Open">Open</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Field Inspection">Field Inspection</option>
+                        <option value="Confirmed Theft">Confirmed Theft</option>
+                        <option value="False Alarm">False Alarm</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-weight:800;">Search Household / Case:</label>
+                    <input 
+                        type="text" 
+                        id="case-search" 
+                        class="case-input" 
+                        placeholder="Search by CASE ID or Household ID"
+                        oninput="renderCaseTable()"
+                    >
+                </div>
+
+                <div style="display:flex; align-items:end;">
+                    <button class="btn-primary" onclick="loadInvestigations()">
+                        <i class="fas fa-rotate"></i> Refresh Cases
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cases Table -->
+    <div class="chart-card full-width">
+        <div class="chart-header">
+            <h3><i class="fas fa-table"></i> Investigation Case Queue</h3>
+            <p>Click Case ID to open the investigation detail page. Click Household ID to open household analysis.</p>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Household ID</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Risk Level</th>
+                    <th>Anomaly Type</th>
+                    <th>Confidence</th>
+                    <th>Assigned To</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody id="cases-tbody">
+                <tr>
+                    <td colspan="9" class="loading">Loading investigation cases...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Empty State Help -->
+    <div class="chart-card full-width">
+        <div class="chart-header">
+            <h3><i class="fas fa-circle-info"></i> How to Create an Investigation Case</h3>
+            <p>Use this workflow after uploading suspicious household data.</p>
+        </div>
+
+        <div style="padding:20px;">
+            <div class="summary-grid">
+                <div class="case-help-card">
+                    <strong>Step 1</strong>
+                    <p>Upload a CSV file on the Predict page.</p>
+                </div>
+
+                <div class="case-help-card">
+                    <strong>Step 2</strong>
+                    <p>Click a suspicious Household ID.</p>
+                </div>
+
+                <div class="case-help-card">
+                    <strong>Step 3</strong>
+                    <p>Open the household detail page.</p>
+                </div>
+
+                <div class="case-help-card">
+                    <strong>Step 4</strong>
+                    <p>Create an investigation case from that household.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allCases = [];
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadInvestigations();
+});
+
+function safeNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
+function formatPercent(value) {
+    return safeNumber(value).toFixed(1) + "%";
+}
+
+function householdLink(householdId) {
+    const id = householdId || "Unknown";
+    return `<a href="/household/${encodeURIComponent(id)}" class="household-link">${id}</a>`;
+}
+
+function caseLink(caseId) {
+    const id = caseId || "Unknown";
+    return `<a href="/investigation/${encodeURIComponent(id)}" class="case-link">${id}</a>`;
+}
+
+function getPriorityClass(priority) {
+    const p = String(priority || "").toLowerCase();
+
+    if (p.includes("critical")) return "priority-critical";
+    if (p.includes("high")) return "priority-high";
+    if (p.includes("medium")) return "priority-medium";
+    return "priority-low";
+}
+
+function getStatusClass(status) {
+    const s = String(status || "").toLowerCase();
+
+    if (s.includes("confirmed")) return "case-status-confirmed";
+    if (s.includes("false")) return "case-status-false";
+    if (s.includes("resolved")) return "case-status-resolved";
+    if (s.includes("field")) return "case-status-field";
+    if (s.includes("review")) return "case-status-review";
+    return "case-status-open";
+}
+
+function getRiskBadgeClass(riskLevel) {
+    const risk = String(riskLevel || "").toLowerCase();
+
+    if (risk.includes("critical")) return "high-risk";
+    if (risk.includes("high")) return "high-risk";
+    if (risk.includes("medium")) return "medium-risk";
+    if (risk.includes("low")) return "investigate";
+    return "normal";
+}
+
+function loadInvestigations() {
+    const status = document.getElementById("status-filter").value || "All";
+
+    document.getElementById("cases-tbody").innerHTML = `
+        <tr>
+            <td colspan="9" class="loading">Loading investigation cases...</td>
+        </tr>
+    `;
+
+    fetch(`/api/investigations?status=${encodeURIComponent(status)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                document.getElementById("cases-tbody").innerHTML = `
+                    <tr>
+                        <td colspan="9" class="error">Error: ${data.message || "Failed to load cases."}</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            allCases = data.cases || [];
+            updateSummaryCards(data.summary || {});
+            renderCaseTable();
+        })
+        .catch(error => {
+            document.getElementById("cases-tbody").innerHTML = `
+                <tr>
+                    <td colspan="9" class="error">Error: ${error.message}</td>
+                </tr>
+            `;
+        });
+}
+
+function updateSummaryCards(summary) {
+    document.getElementById("total-cases").textContent = summary.total_cases ?? 0;
+    document.getElementById("open-cases").textContent = summary.open_cases ?? 0;
+    document.getElementById("critical-cases").textContent = summary.critical_cases ?? 0;
+    document.getElementById("resolved-cases").textContent = summary.resolved_cases ?? 0;
+}
+
+function renderCaseTable() {
+    const tbody = document.getElementById("cases-tbody");
+    const searchText = document.getElementById("case-search").value.toLowerCase().trim();
+
+    let visibleCases = allCases;
+
+    if (searchText) {
+        visibleCases = allCases.filter(c => {
+            const caseId = String(c.case_id || "").toLowerCase();
+            const householdId = String(c.household_id || "").toLowerCase();
+            const anomalyType = String(c.anomaly_type || "").toLowerCase();
+            const assignedTo = String(c.assigned_to || "").toLowerCase();
+
+            return (
+                caseId.includes(searchText) ||
+                householdId.includes(searchText) ||
+                anomalyType.includes(searchText) ||
+                assignedTo.includes(searchText)
+            );
+        });
+    }
+
+    if (!visibleCases || visibleCases.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align:center; padding:30px;">
+                    No investigation cases found.
+                    <br>
+                    <small>Create a case from the Household Detail page.</small>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = visibleCases.map(c => {
+        const priorityClass = getPriorityClass(c.priority);
+        const statusClass = getStatusClass(c.status);
+        const riskClass = getRiskBadgeClass(c.risk_level);
+
+        return `
+            <tr>
+                <td>${caseLink(c.case_id)}</td>
+                <td>${householdLink(c.household_id)}</td>
+                <td><span class="case-priority ${priorityClass}">${c.priority || "Medium"}</span></td>
+                <td><span class="case-status ${statusClass}">${c.status || "Open"}</span></td>
+                <td><span class="status-badge ${riskClass}">${c.risk_level || "Medium Risk"}</span></td>
+                <td>${c.anomaly_type || "Unknown"}</td>
+                <td>${formatPercent(c.confidence)}</td>
+                <td>${c.assigned_to || "Unassigned"}</td>
+                <td>${c.created_at || "--"}</td>
+            </tr>
+        `;
+    }).join("");
+}
+</script>
+{% endblock %}

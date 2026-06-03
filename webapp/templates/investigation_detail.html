@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Investigation Detail - {{ case_id }}{% endblock %}
+
+{% block content %}
+<div class="investigation-detail-container">
+
+    <div class="page-header">
+        <h1><i class="fas fa-magnifying-glass-chart"></i> Investigation Detail</h1>
+        <p>Case investigation workflow, notes, status updates, and linked household analysis.</p>
+    </div>
+
+    <div style="margin-bottom: 20px; display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="window.location.href='/investigations'">
+            <i class="fas fa-arrow-left"></i> Back to Investigations
+        </button>
+
+        <button class="btn-secondary" id="household-link-btn" onclick="openHouseholdPage()" style="display:none;">
+            <i class="fas fa-home"></i> Open Household Detail
+        </button>
+    </div>
+
+    <div id="loading-box" class="chart-card full-width">
+        <div class="loading">Loading investigation case...</div>
+    </div>
+
+    <div id="error-box" class="error" style="display:none;"></div>
+
+    <div id="case-content" style="display:none;">
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-folder-open"></i></div>
+                <div class="stat-info">
+                    <h3 id="case-id-card">--</h3>
+                    <p>Case ID</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-home"></i></div>
+                <div class="stat-info">
+                    <h3 id="household-id-card">--</h3>
+                    <p>Household ID</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                <div class="stat-info">
+                    <h3 id="priority-card">--</h3>
+                    <p>Priority</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+                <div class="stat-info">
+                    <h3 id="status-card">--</h3>
+                    <p>Status</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card full-width">
+            <div class="chart-header">
+                <h3><i class="fas fa-circle-info"></i> Case Overview</h3>
+                <p>Core investigation information generated from anomaly detection.</p>
+            </div>
+
+            <div style="padding:20px;">
+                <div class="case-banner" id="case-banner">
+                    <div class="summary-grid">
+                        <div>
+                            <strong>Risk Level</strong><br>
+                            <span id="risk-level">--</span>
+                        </div>
+                        <div>
+                            <strong>Anomaly Type</strong><br>
+                            <span id="anomaly-type">--</span>
+                        </div>
+                        <div>
+                            <strong>Confidence</strong><br>
+                            <span id="confidence">--</span>
+                        </div>
+                        <div>
+                            <strong>Total Consumption</strong><br>
+                            <span id="total-consumption">--</span>
+                        </div>
+                        <div>
+                            <strong>Zero Intervals</strong><br>
+                            <span id="zero-intervals">--</span>
+                        </div>
+                        <div>
+                            <strong>Assigned To</strong><br>
+                            <span id="assigned-to-display">--</span>
+                        </div>
+                    </div>
+
+                    <div class="anomaly-type" style="margin-top:15px;">
+                        <strong>Description:</strong>
+                        <span id="case-description">--</span>
+                    </div>
+
+                    <div class="anomaly-type" style="margin-top:12px;">
+                        <strong>Recommended Action:</strong>
+                        <span id="recommended-action">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card full-width">
+            <div class="chart-header">
+                <h3><i class="fas fa-pen-to-square"></i> Update Investigation Status</h3>
+                <p>Change case status, assign inspector, and track resolution.</p>
+            </div>
+
+            <div style="padding:20px;">
+                <div class="status-update-grid">
+                    <div>
+                        <label style="font-weight:800;">Status</label>
+                        <select id="status-select" class="case-select">
+                            <option value="Open">Open</option>
+                            <option value="Under Review">Under Review</option>
+                            <option value="Field Inspection">Field Inspection</option>
+                            <option value="Confirmed Theft">Confirmed Theft</option>
+                            <option value="False Alarm">False Alarm</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="font-weight:800;">Assigned To</label>
+                        <input type="text" id="assigned-to-input" class="case-input" placeholder="Inspector name">
+                    </div>
+
+                    <div>
+                        <button class="btn-primary" onclick="updateCaseStatus()">
+                            <i class="fas fa-save"></i> Update Case
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-line"></i> Confidence Trend</h3>
+                    <p>Historical confidence trend for linked household.</p>
+                </div>
+                <div id="confidence-trend-chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-bolt"></i> Consumption Trend</h3>
+                    <p>Total consumption trend for linked household.</p>
+                </div>
+                <div id="consumption-trend-chart"></div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-note-sticky"></i> Add Investigation Note</h3>
+                    <p>Record inspector observations or investigation updates.</p>
+                </div>
+
+                <div style="padding:20px;">
+                    <textarea id="note-text" class="note-input" placeholder="Write investigation note here..."></textarea>
+                    <button class="btn-primary" onclick="addNote()">
+                        <i class="fas fa-plus"></i> Add Note
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-timeline"></i> Investigation Timeline</h3>
+                    <p>Case notes and system updates.</p>
+                </div>
+
+                <div style="padding:20px;">
+                    <div id="notes-list" class="investigation-timeline">
+                        <div class="loading">Loading notes...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card full-width">
+            <div class="chart-header">
+                <h3><i class="fas fa-clock-rotate-left"></i> Linked Household Detection History</h3>
+                <p>Recent detection records for this household.</p>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Prediction</th>
+                        <th>Anomaly Type</th>
+                        <th>Confidence</th>
+                        <th>Total Consumption</th>
+                        <th>Zero Intervals</th>
+                    </tr>
+                </thead>
+                <tbody id="household-history-tbody">
+                    <tr>
+                        <td colspan="6" class="loading">Loading history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const caseId = "{{ case_id }}";
+let caseData = null;
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadCaseDetail();
+});
+
+function safeNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
+function formatPercent(value) {
+    return safeNumber(value).toFixed(1) + "%";
+}
+
+function formatKwh(value) {
+    return safeNumber(value).toFixed(2) + " kWh";
+}
+
+function getPriorityClass(priority) {
+    const p = String(priority || "").toLowerCase();
+    if (p.includes("critical")) return "priority-critical";
+    if (p.includes("high")) return "priority-high";
+    if (p.includes("medium")) return "priority-medium";
+    return "priority-low";
+}
+
+function getStatusClass(status) {
+    const s = String(status || "").toLowerCase();
+    if (s.includes("confirmed")) return "case-status-confirmed";
+    if (s.includes("false")) return "case-status-false";
+    if (s.includes("resolved")) return "case-status-resolved";
+    if (s.includes("field")) return "case-status-field";
+    if (s.includes("review")) return "case-status-review";
+    return "case-status-open";
+}
+
+function showError(message) {
+    document.getElementById("loading-box").style.display = "none";
+    document.getElementById("case-content").style.display = "none";
+    document.getElementById("error-box").style.display = "block";
+    document.getElementById("error-box").innerHTML = `<strong>Error:</strong> ${message}`;
+}
+
+function loadCaseDetail() {
+    fetch(`/api/investigations/${encodeURIComponent(caseId)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                showError(data.message || "Case not found.");
+                return;
+            }
+
+            caseData = data;
+
+            document.getElementById("loading-box").style.display = "none";
+            document.getElementById("case-content").style.display = "block";
+
+            fillCaseOverview(data.case);
+            renderCharts(data.household_trend || {});
+            renderNotes(data.notes || []);
+            renderHouseholdHistory(data.household_history || []);
+        })
+        .catch(error => showError(error.message));
+}
+
+function fillCaseOverview(c) {
+    document.getElementById("case-id-card").textContent = c.case_id || "--";
+    document.getElementById("household-id-card").textContent = c.household_id || "--";
+    document.getElementById("priority-card").textContent = c.priority || "--";
+    document.getElementById("status-card").textContent = c.status || "--";
+
+    document.getElementById("risk-level").innerHTML = `<span class="status-badge ${c.risk_level && c.risk_level.includes('Critical') ? 'high-risk' : 'medium-risk'}">${c.risk_level || "--"}</span>`;
+    document.getElementById("anomaly-type").textContent = c.anomaly_type || "--";
+    document.getElementById("confidence").textContent = formatPercent(c.confidence);
+    document.getElementById("total-consumption").textContent = formatKwh(c.total_consumption);
+    document.getElementById("zero-intervals").textContent = c.zero_intervals ?? "--";
+    document.getElementById("assigned-to-display").textContent = c.assigned_to || "Unassigned";
+    document.getElementById("case-description").textContent = c.description || "--";
+    document.getElementById("recommended-action").textContent = c.recommended_action || "--";
+
+    document.getElementById("status-select").value = c.status || "Open";
+    document.getElementById("assigned-to-input").value = c.assigned_to || "";
+
+    document.getElementById("household-link-btn").style.display = "inline-flex";
+}
+
+function openHouseholdPage() {
+    if (!caseData || !caseData.case) return;
+    window.location.href = `/household/${encodeURIComponent(caseData.case.household_id)}`;
+}
+
+function updateCaseStatus() {
+    const status = document.getElementById("status-select").value;
+    const assignedTo = document.getElementById("assigned-to-input").value.trim();
+
+    fetch(`/api/investigations/${encodeURIComponent(caseId)}/status`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            status: status,
+            assigned_to: assignedTo || "Unassigned"
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.message || "Failed to update case.");
+            return;
+        }
+
+        loadCaseDetail();
+    })
+    .catch(error => alert("Error: " + error.message));
+}
+
+function addNote() {
+    const noteText = document.getElementById("note-text").value.trim();
+
+    if (!noteText) {
+        alert("Please write a note first.");
+        return;
+    }
+
+    fetch(`/api/investigations/${encodeURIComponent(caseId)}/notes`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({note_text: noteText})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.message || "Failed to add note.");
+            return;
+        }
+
+        document.getElementById("note-text").value = "";
+        loadCaseDetail();
+    })
+    .catch(error => alert("Error: " + error.message));
+}
+
+function renderNotes(notes) {
+    const container = document.getElementById("notes-list");
+
+    if (!notes || notes.length === 0) {
+        container.innerHTML = `<div class="empty-state">No notes added yet.</div>`;
+        return;
+    }
+
+    container.innerHTML = notes.map(note => `
+        <div class="timeline-item">
+            <strong>${note.added_by || "System User"}</strong><br>
+            <small>${note.created_at || "--"}</small>
+            <p>${note.note_text || ""}</p>
+        </div>
+    `).join("");
+}
+
+function renderCharts(trend) {
+    const labels = trend.labels || [];
+    const confidence = trend.confidence || [];
+    const consumption = trend.total_consumption || [];
+
+    Plotly.newPlot("confidence-trend-chart", [{
+        x: labels,
+        y: confidence,
+        type: "scatter",
+        mode: "lines+markers",
+        line: {color: "#C73E1D", width: 3}
+    }], {
+        height: 350,
+        margin: {t: 20, r: 20, l: 60, b: 80},
+        xaxis: {title: "Time"},
+        yaxis: {title: "Confidence (%)", range: [0, 100]}
+    }, {responsive: true});
+
+    Plotly.newPlot("consumption-trend-chart", [{
+        x: labels,
+        y: consumption,
+        type: "scatter",
+        mode: "lines+markers",
+        line: {color: "#2E86AB", width: 3},
+        fill: "tozeroy"
+    }], {
+        height: 350,
+        margin: {t: 20, r: 20, l: 70, b: 80},
+        xaxis: {title: "Time"},
+        yaxis: {title: "Total Consumption (kWh)"}
+    }, {responsive: true});
+}
+
+function renderHouseholdHistory(history) {
+    const tbody = document.getElementById("household-history-tbody");
+
+    if (!history || history.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6">No household history found.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = history.map(row => {
+        const isAnomaly = Boolean(row.is_anomaly);
+
+        return `
+            <tr class="${isAnomaly ? "anomaly-row" : "normal-row"}">
+                <td>${row.created_at || "--"}</td>
+                <td>${isAnomaly ? "⚠️ Suspicious" : "✅ Normal"}</td>
+                <td>${row.anomaly_type || "--"}</td>
+                <td>${formatPercent(row.confidence)}</td>
+                <td>${formatKwh(row.total_consumption)}</td>
+                <td>${row.zero_intervals ?? "--"}</td>
+            </tr>
+        `;
+    }).join("");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+
+{% block title %}Predict & Detect{% endblock %}
+
+{% block content %}
+<div class="predict-container">
+    <div class="page-header">
+        <h1><i class="fas fa-search"></i> Predict & Detect</h1>
+        <p>Upload consumption data or use the interactive tool to detect suspicious electricity usage patterns.</p>
+    </div>
+
+    <div class="input-tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'manual')">
+            <i class="fas fa-sliders-h"></i> Interactive Tool
+        </button>
+        <button class="tab-btn" onclick="switchTab(event, 'upload')">
+            <i class="fas fa-upload"></i> Upload CSV
+        </button>
+        <button class="tab-btn" onclick="switchTab(event, 'sample')">
+            <i class="fas fa-chart-line"></i> Sample Patterns
+        </button>
+    </div>
+
+    <div id="manual-tab" class="tab-content active">
+        <div class="predict-grid">
+            <div class="input-panel">
+                <h3><i class="fas fa-chart-line"></i> Consumption Pattern Generator</h3>
+                <p>Adjust the sliders to create a 24-hour consumption pattern.</p>
+
+                <div class="slider-container">
+                    <label>Morning Peak (6-9 AM):</label>
+                    <input type="range" id="morning-slider" min="0" max="3" step="0.1" value="1.2">
+                    <span id="morning-value">1.2 kWh</span>
+                </div>
+
+                <div class="slider-container">
+                    <label>Evening Peak (5-8 PM):</label>
+                    <input type="range" id="evening-slider" min="0" max="4" step="0.1" value="1.8">
+                    <span id="evening-value">1.8 kWh</span>
+                </div>
+
+                <div class="slider-container">
+                    <label>Night Base (11 PM - 5 AM):</label>
+                    <input type="range" id="night-slider" min="0" max="1.5" step="0.05" value="0.2">
+                    <span id="night-value">0.2 kWh</span>
+                </div>
+
+                <div class="slider-container">
+                    <label>Midday Baseline:</label>
+                    <input type="range" id="baseline-slider" min="0" max="2" step="0.1" value="0.5">
+                    <span id="baseline-value">0.5 kWh</span>
+                </div>
+
+                <div class="slider-container">
+                    <label>Noise / Variability:</label>
+                    <input type="range" id="noise-slider" min="0" max="0.8" step="0.05" value="0.2">
+                    <span id="noise-value">0.2</span>
+                </div>
+
+                <button class="btn-primary" onclick="generateAndPredict()">
+                    <i class="fas fa-chart-line"></i> Generate & Predict
+                </button>
+
+                <button class="btn-secondary" onclick="resetSliders()">
+                    <i class="fas fa-undo-alt"></i> Reset
+                </button>
+            </div>
+
+            <div class="viz-panel">
+                <div id="consumption-chart"></div>
+                <div id="prediction-result" class="prediction-result">
+                    <div class="result-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Generate a pattern to see prediction.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="upload-tab" class="tab-content">
+        <div class="upload-panel">
+            <h3><i class="fas fa-upload"></i> Upload Consumption Data</h3>
+            <p>Upload a CSV file with <strong>household_id</strong> and <strong>interval_1 to interval_96</strong>.</p>
+
+            <div class="upload-area" id="upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag and drop or click to upload CSV</p>
+                <small>Example: household_id, interval_1, interval_2, ... interval_96</small>
+                <input type="file" id="csv-file" accept=".csv" style="display: none;">
+            </div>
+
+            <div class="upload-preview" id="upload-preview" style="display: none;">
+                <h4>CSV Validation</h4>
+                <div id="preview-info"></div>
+            </div>
+
+            <button class="btn-primary" onclick="uploadAndPredict()" id="predict-upload-btn" style="display: none;">
+                <i class="fas fa-chart-simple"></i> Predict All Households
+            </button>
+
+            <button class="btn-secondary" onclick="downloadBatchResults()" id="download-results-btn" style="display: none;">
+                <i class="fas fa-download"></i> Download Results CSV
+            </button>
+
+            <div id="batch-results" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <div id="sample-tab" class="tab-content">
+        <div class="sample-panel">
+            <h3><i class="fas fa-clipboard-list"></i> Sample Patterns</h3>
+            <p>Test the system with predefined consumption patterns.</p>
+
+            <div class="sample-buttons">
+                <button class="sample-btn" onclick="loadSample('normal')">Normal Household</button>
+                <button class="sample-btn" onclick="loadSample('peak_clipping')">Peak Clipping</button>
+                <button class="sample-btn" onclick="loadSample('night_zeroing')">Night Zeroing</button>
+                <button class="sample-btn" onclick="loadSample('overall_reduction')">Overall Reduction</button>
+                <button class="sample-btn" onclick="loadSample('spike')">Sudden Spike</button>
+            </div>
+
+            <div class="sample-result" id="sample-result">
+                <div id="sample-chart"></div>
+                <div id="sample-prediction"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentConsumption = null;
+let selectedCSVFile = null;
+let lastBatchResults = null;
+
+function safeNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
+function getConfidence(data) {
+    let confidence = safeNumber(data.confidence_percent ?? data.confidence, 0);
+    if (confidence <= 1) confidence *= 100;
+    return Math.max(0, Math.min(100, confidence));
+}
+
+function getRiskBadgeClass(riskLevel) {
+    const risk = String(riskLevel || '').toLowerCase();
+
+    if (risk.includes('critical')) return 'high-risk';
+    if (risk.includes('high')) return 'high-risk';
+    if (risk.includes('medium')) return 'medium-risk';
+    if (risk.includes('low')) return 'investigate';
+    return 'normal';
+}
+
+function householdLink(householdId) {
+    const id = householdId || 'Unknown';
+    return `<a href="/household/${encodeURIComponent(id)}" class="household-link">${id}</a>`;
+}
+
+function switchTab(event, tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+}
+
+function generateConsumption() {
+    const morning = parseFloat(document.getElementById('morning-slider').value);
+    const evening = parseFloat(document.getElementById('evening-slider').value);
+    const night = parseFloat(document.getElementById('night-slider').value);
+    const baseline = parseFloat(document.getElementById('baseline-slider').value);
+    const noise = parseFloat(document.getElementById('noise-slider').value);
+
+    const consumption = [];
+
+    for (let i = 0; i < 96; i++) {
+        const hour = i / 4;
+        let value = baseline;
+
+        if (hour >= 6 && hour < 9) {
+            value = baseline + ((hour - 6) / 3) * (morning - baseline);
+        } else if (hour >= 17 && hour < 20) {
+            value = baseline + ((hour - 17) / 3) * (evening - baseline);
+        } else if (hour >= 23 || hour < 5) {
+            value = night;
+        }
+
+        value += (Math.random() - 0.5) * noise;
+        consumption.push(Number(Math.max(0, value).toFixed(3)));
+    }
+
+    return consumption;
+}
+
+function generateAndPredict() {
+    const consumption = generateConsumption();
+    currentConsumption = consumption;
+    plotConsumption(consumption, 'consumption-chart');
+    predictConsumption(consumption);
+}
+
+function plotConsumption(consumption, chartId) {
+    const hours = Array.from({ length: 96 }, (_, i) => (i / 4).toFixed(2));
+
+    const trace = {
+        x: hours,
+        y: consumption,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: '#2E86AB', width: 2 },
+        fill: 'tozeroy',
+        fillcolor: 'rgba(46, 134, 171, 0.2)'
+    };
+
+    const layout = {
+        title: '24-Hour Consumption Pattern',
+        xaxis: { title: 'Hour of Day' },
+        yaxis: { title: 'Consumption (kWh per 15-min)' },
+        height: 400,
+        margin: { t: 40, r: 20, l: 60, b: 50 }
+    };
+
+    Plotly.newPlot(chartId, [trace], layout, { responsive: true });
+}
+
+function predictConsumption(consumption) {
+    document.getElementById('prediction-result').innerHTML = '<div class="loading">Running prediction...</div>';
+
+    fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consumption: consumption, household_id: 'Manual_Input' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById('prediction-result').innerHTML = `<div class="error">Error: ${data.error}</div>`;
+            return;
+        }
+
+        displayPredictionResult(data);
+    })
+    .catch(error => {
+        document.getElementById('prediction-result').innerHTML = `<div class="error">Prediction failed: ${error.message}</div>`;
+    });
+}
+
+function displayPredictionResult(data) {
+    const isAnomaly = Boolean(data.is_anomaly);
+    const confidence = getConfidence(data);
+    const cardClass = isAnomaly ? 'result-card anomaly' : 'result-card normal';
+    const title = data.prediction_label || (isAnomaly ? 'Suspicious Consumption Pattern' : 'Normal Consumption Pattern');
+
+    const riskLevel = data.risk_level || (isAnomaly ? 'Medium Risk' : 'Normal');
+    const riskClass = getRiskBadgeClass(riskLevel);
+    const severityScore = safeNumber(data.severity_score, 0);
+    const ruleRiskPoints = safeNumber(data.rule_risk_points, 0);
+
+    const reasons = Array.isArray(data.reasons) ? data.reasons : [];
+    const suspiciousFeatures = Array.isArray(data.suspicious_features) ? data.suspicious_features : [];
+
+    const reasonsHtml = reasons.length > 0
+        ? `<ul style="margin: 8px 0 0 18px;">${reasons.map(r => `<li>${r}</li>`).join('')}</ul>`
+        : `<p>No explanation available.</p>`;
+
+    const suspiciousFeaturesHtml = suspiciousFeatures.length > 0
+        ? suspiciousFeatures.map(f => `<span class="status-badge investigate" style="margin: 3px;">${f}</span>`).join('')
+        : `<span class="status-badge normal">No suspicious feature detected</span>`;
+
+    document.getElementById('prediction-result').innerHTML = `
+        <div class="${cardClass}">
+            <div class="result-header">
+                <i class="fas ${isAnomaly ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                <h2>${isAnomaly ? '⚠️' : '✅'} ${title}</h2>
+            </div>
+
+            <div class="confidence-meter">
+                <div class="confidence-label">Confidence: ${confidence.toFixed(1)}%</div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill ${isAnomaly ? 'anomaly-fill' : 'normal-fill'}" style="width:${confidence}%"></div>
+                </div>
+            </div>
+
+            <div class="summary-grid" style="margin: 12px 0;">
+                <span><strong>Risk Level:</strong> <span class="status-badge ${riskClass}">${riskLevel}</span></span>
+                <span><strong>Severity Score:</strong> ${severityScore.toFixed(1)}%</span>
+                <span><strong>Rule Risk Points:</strong> ${ruleRiskPoints}</span>
+                <span><strong>Inspection Priority:</strong> ${data.inspection_priority || 'No inspection required'}</span>
+            </div>
+
+            <div class="anomaly-type"><strong>Type:</strong> ${data.anomaly_type}</div>
+        </div>
+    `;
+}
+
+function resetSliders() {
+    document.getElementById('morning-slider').value = '1.2';
+    document.getElementById('evening-slider').value = '1.8';
+    document.getElementById('night-slider').value = '0.2';
+    document.getElementById('baseline-slider').value = '0.5';
+    document.getElementById('noise-slider').value = '0.2';
+    updateSliderValues();
+    generateAndPredict();
+}
+
+function updateSliderValues() {
+    document.getElementById('morning-value').textContent = document.getElementById('morning-slider').value + ' kWh';
+    document.getElementById('evening-value').textContent = document.getElementById('evening-slider').value + ' kWh';
+    document.getElementById('night-value').textContent = document.getElementById('night-slider').value + ' kWh';
+    document.getElementById('baseline-value').textContent = document.getElementById('baseline-slider').value + ' kWh';
+    document.getElementById('noise-value').textContent = document.getElementById('noise-slider').value;
+}
+
+document.getElementById('morning-slider').addEventListener('input', () => { updateSliderValues(); generateAndPredict(); });
+document.getElementById('evening-slider').addEventListener('input', () => { updateSliderValues(); generateAndPredict(); });
+document.getElementById('night-slider').addEventListener('input', () => { updateSliderValues(); generateAndPredict(); });
+document.getElementById('baseline-slider').addEventListener('input', () => { updateSliderValues(); generateAndPredict(); });
+document.getElementById('noise-slider').addEventListener('input', () => { updateSliderValues(); generateAndPredict(); });
+
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('csv-file');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+
+uploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+
+uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+
+    const file = e.dataTransfer.files[0];
+
+    if (file && file.name.endsWith('.csv')) {
+        selectedCSVFile = file;
+        validateCSVFile(file);
+    }
+});
+
+fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) {
+        selectedCSVFile = e.target.files[0];
+        validateCSVFile(selectedCSVFile);
+    }
+});
+
+function validateCSVFile(file) {
+    document.getElementById('upload-preview').style.display = 'block';
+    document.getElementById('preview-info').innerHTML = `<p>Checking ${file.name}...</p>`;
+    document.getElementById('predict-upload-btn').style.display = 'none';
+    document.getElementById('download-results-btn').style.display = 'none';
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+
+        if (lines.length < 2) {
+            document.getElementById('preview-info').innerHTML = `<div class="error">CSV must contain a header row and at least one household row.</div>`;
+            return;
+        }
+
+        const headers = lines[0].split(',').map(h => h.trim());
+        const intervalCols = headers.filter(h => h.toLowerCase().startsWith('interval_'));
+        const hasHouseholdId = headers.includes('household_id');
+
+        let html = `
+            <p><strong>Selected File:</strong> ${file.name}</p>
+            <p><strong>Rows Found:</strong> ${lines.length - 1}</p>
+            <p><strong>Interval Columns:</strong> ${intervalCols.length}/96</p>
+            <p><strong>household_id column:</strong> ${hasHouseholdId ? '✅ Found' : '⚠️ Missing'}</p>
+        `;
+
+        if (intervalCols.length >= 96) {
+            html += `<p style="color:green;"><strong>CSV is valid. Ready for prediction.</strong></p>`;
+            document.getElementById('predict-upload-btn').style.display = 'inline-block';
+        } else {
+            html += `<p style="color:red;"><strong>Invalid CSV. It must have interval_1 to interval_96 columns.</strong></p>`;
+        }
+
+        document.getElementById('preview-info').innerHTML = html;
+    };
+
+    reader.readAsText(file);
+}
+
+function uploadAndPredict() {
+    if (!selectedCSVFile) {
+        document.getElementById('batch-results').innerHTML = `<div class="error">Please select a CSV file first.</div>`;
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedCSVFile);
+
+    document.getElementById('batch-results').innerHTML = '<div class="loading">Processing CSV predictions...</div>';
+
+    fetch('/api/batch_predict', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            document.getElementById('batch-results').innerHTML = `<div class="error">Error: ${data.error}</div>`;
+            return;
+        }
+
+        lastBatchResults = data.results;
+        document.getElementById('download-results-btn').style.display = 'inline-block';
+        displayBatchResults(data);
+    })
+    .catch(error => {
+        document.getElementById('batch-results').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+    });
+}
+
+function displayBatchResults(data) {
+    const total = safeNumber(data.total_households);
+    const anomalyCount = safeNumber(data.anomalies_detected);
+    const anomalyRate = total > 0 ? ((anomalyCount / total) * 100).toFixed(1) : '0.0';
+
+    document.getElementById('batch-results').innerHTML = `
+        <div class="batch-summary">
+            <h4>Batch Prediction Results</h4>
+            <div class="summary-stats">
+                <span>Total Households: ${total}</span>
+                <span>Suspicious Patterns: ${anomalyCount}</span>
+                <span>Anomaly Rate: ${anomalyRate}%</span>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Household ID</th>
+                        <th>Status</th>
+                        <th>Confidence</th>
+                        <th>Risk Level</th>
+                        <th>Severity</th>
+                        <th>Anomaly Type</th>
+                        <th>Total Consumption</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.results.map(r => {
+                        const confidence = getConfidence(r);
+                        const riskLevel = r.risk_level || (r.is_anomaly ? 'Medium Risk' : 'Normal');
+                        const severity = safeNumber(r.severity_score, 0);
+                        return `
+                            <tr class="${r.is_anomaly ? 'anomaly-row' : 'normal-row'}">
+                                <td>${householdLink(r.household_id)}</td>
+                                <td>${r.is_anomaly ? '⚠️ Suspicious' : '✅ Normal'}</td>
+                                <td>${confidence.toFixed(1)}%</td>
+                                <td><span class="status-badge ${getRiskBadgeClass(riskLevel)}">${riskLevel}</span></td>
+                                <td>${severity.toFixed(1)}%</td>
+                                <td>${r.anomaly_type}</td>
+                                <td>${safeNumber(r.total_consumption).toFixed(2)} kWh</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function downloadBatchResults() {
+    if (!lastBatchResults || lastBatchResults.length === 0) {
+        alert('No batch results available to download.');
+        return;
+    }
+
+    const headers = ['household_id', 'status', 'confidence', 'risk_level', 'severity_score', 'anomaly_type', 'total_consumption'];
+
+    const rows = lastBatchResults.map(r => [
+        r.household_id,
+        r.is_anomaly ? 'Suspicious' : 'Normal',
+        getConfidence(r).toFixed(1),
+        r.risk_level || (r.is_anomaly ? 'Medium Risk' : 'Normal'),
+        safeNumber(r.severity_score, 0).toFixed(1),
+        r.anomaly_type,
+        safeNumber(r.total_consumption).toFixed(2)
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'electroguard_batch_results.csv';
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function loadSample(patternType) {
+    document.getElementById('sample-prediction').innerHTML = `<div class="loading">Loading sample...</div>`;
+
+    fetch(`/api/generate_sample?pattern=${patternType}`)
+        .then(response => response.json())
+        .then(data => {
+            plotConsumption(data.consumption, 'sample-chart');
+
+            return fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    consumption: data.consumption,
+                    household_id: `Sample_${patternType}`
+                })
+            });
+        })
+        .then(res => res.json())
+        .then(pred => displaySamplePrediction(pred))
+        .catch(error => {
+            document.getElementById('sample-prediction').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        });
+}
+
+function displaySamplePrediction(data) {
+    const isAnomaly = Boolean(data.is_anomaly);
+    const confidence = getConfidence(data);
+    const riskLevel = data.risk_level || (isAnomaly ? 'Medium Risk' : 'Normal');
+
+    document.getElementById('sample-prediction').innerHTML = `
+        <div class="sample-result-card" style="border-left-color:${isAnomaly ? '#C73E1D' : '#27AE60'}">
+            <strong>${isAnomaly ? '⚠️ Suspicious' : '✅ Normal'}</strong><br>
+            <small>Confidence: ${confidence.toFixed(1)}% | Risk: ${riskLevel} | Type: ${data.anomaly_type}</small><br>
+            <small>Severity: ${safeNumber(data.severity_score, 0).toFixed(1)}% | ${data.inspection_priority || ''}</small><br>
+            <small>${data.voting || ''}</small>
+        </div>
+    `;
+}
+
+generateAndPredict();
+</script>
+{% endblock %}
